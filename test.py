@@ -2,7 +2,7 @@
 import streamlit as st
 import random
 
-# 기본 아이돌 리스트
+# [1] 기본 아이돌 목록
 default_idols = [
     {"name": "정국 (BTS)", "img": "https://example.com/jungkook.jpg"},
     {"name": "뷔 (BTS)", "img": "https://example.com/v.jpg"},
@@ -25,31 +25,7 @@ default_idols = [
 st.title("남자 아이돌 이상형 월드컵 👑")
 st.write("16강 → 8강 → 4강 → 결승 → 우승자!")
 
-# ==== 사이드바: 커스텀 설정 ====
-st.sidebar.header("⚙ 옵션 설정")
-custom_mode = st.sidebar.checkbox("커스텀 모드 (직접 멤버 입력)", value=False)
-
-if custom_mode:
-    user_input = st.sidebar.text_area(
-        "아이돌 이름을 쉼표(,) 혹은 줄바꿈으로 8명 이상 입력하세요.",
-        placeholder="예: 지민, 정국, 성한빈..."
-    )
-    if user_input:
-        names = [x.strip() for x in user_input.replace('\n', ',').split(',') if x.strip()]
-        if len(names) >= 8:
-            idols = [{"name": name, "img": "https://example.com/default.jpg"} for name in names]
-        else:
-            st.sidebar.warning("최소 8명 이상 입력해주세요!")
-            idols = default_idols
-    else:
-        idols = default_idols
-else:
-    idols = default_idols
-
-# Shuffle
-random.shuffle(idols)
-
-# ---- AI 분석 함수 ----
+# ------------------- AI 분석 함수 -----------------
 def analyze_winner(name):
     if "성한빈" in name:
         return "당신은 순수하고 청량한 리더십 있는 타입을 좋아하네요!"
@@ -58,13 +34,41 @@ def analyze_winner(name):
     else:
         return "감각적이고 매력적인 스타일을 선호하는 것 같아요!"
 
-# ---- 세션 초기화 ----
+# ------------------ 사이드바 옵션 -----------------
+st.sidebar.header("⚙ 옵션 설정")
+custom_mode = st.sidebar.checkbox("커스텀 모드 (직접 멤버 입력)", value=False)
+
+if custom_mode:
+    user_input = st.sidebar.text_area(
+        "아이돌 이름을 쉼표 또는 줄바꿈으로 8명 이상 입력",
+        placeholder="예: 지민, 정국, 성한빈, 차은우..."
+    )
+    apply_custom = st.sidebar.button("커스텀 적용하기")
+
+# 초기 라운드 설정 (기본값)
 if "round" not in st.session_state:
-    st.session_state.round = idols
+    st.session_state.round = default_idols
     st.session_state.next_round = []
     st.session_state.index = 0
-    st.session_state.stage = len(idols)
+    st.session_state.stage = len(default_idols)
 
+# 커스텀 적용 버튼 눌렀을 때 처리
+if custom_mode and 'apply_custom' in locals() and apply_custom:
+    names = [x.strip() for x in user_input.replace('\n', ',').split(',') if x.strip()]
+    if len(names) < 8:
+        st.sidebar.warning("8명 이상 입력해야 시작할 수 있어요!")
+    else:
+        # 커스텀 이름만으로 idol 리스트 생성 (img는 임시 공용)
+        custom_idols = [{"name": name, "img": "https://example.com/default.jpg"} for name in names]
+        random.shuffle(custom_idols)
+        # 세션 초기화 + 반영
+        st.session_state.round = custom_idols
+        st.session_state.next_round = []
+        st.session_state.index = 0
+        st.session_state.stage = len(custom_idols)
+        st.experimental_rerun()
+
+# ------------------- 라운드 로직 -----------------
 def choose_idol(idol):
     st.session_state.next_round.append(idol)
     st.session_state.index += 2
@@ -74,7 +78,7 @@ def choose_idol(idol):
         st.session_state.index = 0
         st.session_state.stage //= 2
 
-# ---- 메인 화면 ----
+# --------------- 메인화면: 토너먼트 ---------------
 if len(st.session_state.round) == 1:
     winner = st.session_state.round[0]
     st.header("🏆 최종 우승자!")
@@ -82,10 +86,10 @@ if len(st.session_state.round) == 1:
     st.image(winner["img"], width=300)
     comment = analyze_winner(winner["name"])
     st.markdown(f"**AI 분석 결과**: {comment}")
-    
-    # 다시 시작 버튼 클릭 시 세션 초기화
+
     if st.button("다시 시작하기"):
         st.session_state.clear()
+        st.experimental_rerun()
 
 else:
     left = st.session_state.round[st.session_state.index]
@@ -102,8 +106,6 @@ else:
         st.image(right["img"], width=250)
         if st.button(right["name"] + " 선택", key=f"right_{st.session_state.index}"):
             choose_idol(right)
-
-
 
 
 
