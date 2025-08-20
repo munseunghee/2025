@@ -98,7 +98,7 @@ idols = [
     {"name": "박지훈(워너원)", "img": "https://example.com/park_jihun.jpg"},
     {"name": "시온 (NCT WISH)", "img": "https://example.com/shion.jpg"},
     {"name": "박성훈(엔하이픈)", "img": "https://example.com/sunghoon.jpg"}
-
+]
 
 random.shuffle(idols)
 st.title("남자 아이돌 이상형 월드컵 👑")
